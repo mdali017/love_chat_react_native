@@ -1,4 +1,5 @@
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Pressable,
@@ -8,13 +9,42 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {useNavigation} from '@react-navigation/native';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {AuthContext} from '../AuthContext';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigation = useNavigation();
+  const {token, setToken} = useContext(AuthContext);
+
+  useEffect(() => {
+    if (token) {
+      navigation.replace('MainStack', {screen: 'Main'});
+    }
+  }, [token, navigation]);
+
+  const handleLogIn = async () => {
+    const user = {
+      email: email,
+      password: password,
+    };
+    console.log(user);
+    try {
+      axios.post('http://10.0.2.2:8005/login', user).then(response => {
+        const token = response.data.token;
+        AsyncStorage.setItem('authToken', token);
+        setToken();
+        Alert.alert('Login Successfull', 'You have been loggedin successfully');
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: 'white'}}>
       <View style={{padding: 10, alignItems: 'center'}}>
@@ -68,6 +98,7 @@ const LoginScreen = () => {
               </View>
             </View>
             <Pressable
+              onPress={handleLogIn}
               style={{
                 width: 200,
                 backgroundColor: '#4A55A2',
